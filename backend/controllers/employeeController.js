@@ -10,12 +10,35 @@ exports.getTasks = async (req, res) => {
 };
 
 exports.updateTaskStatus = async (req, res) => {
-  const { taskId, status } = req.body;
+  const { taskId, status, proof } = req.body;
+
+  if (!taskId || !status) {
+    return res.status(400).json({ message: "Task ID and status are required" });
+  }
 
   try {
-    await Task.findByIdAndUpdate(taskId, { status });
-    res.json({ message: "Task updated" });
+    const task = await Task.findById(taskId);
+
+    if (!task) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+
+    // ✅ Ensure only the assigned user can update it
+    if (task.assignedTo.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "You are not allowed to update this task" });
+    }
+
+    task.status = status;
+
+    if (proof) {
+      task.proof = proof;
+    }
+
+    await task.save();
+
+    res.json({ message: "Task updated successfully", task });
   } catch (err) {
     res.status(500).json({ message: "Error updating task", error: err.message });
   }
 };
+

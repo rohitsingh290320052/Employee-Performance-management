@@ -66,3 +66,15 @@ exports.taskAnalytics = async (req, res) => {
     res.status(500).json({ message: "Error fetching analytics", error: error.message });
   }
 };
+
+exports.lookupUser = async (req, res) => {
+  try {
+    const { email } = req.params;
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ message: "Error looking up user", error: err.message });
+  }
+};

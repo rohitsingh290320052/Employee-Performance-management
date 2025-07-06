@@ -8,6 +8,6 @@ const router = express.Router();
 router.get("/tasks", authenticate, getTasks);
 
 // ✅ Fix: Include :id param in the update route
-router.put("/update-task/:id", authenticate, updateTaskStatus);
+router.put("/update-task", authenticate, updateTaskStatus);
 
 module.exports = router;
