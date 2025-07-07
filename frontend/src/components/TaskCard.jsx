@@ -1,46 +1,72 @@
-// import {Card,CardContent,Typography,Chip,Stack,Box} from "@mui/material";
-// import PriorityHighIcon from "@mui/icons-material/PriorityHigh";
-// import EventIcon from "@mui/icons-material/Event";
+import { Card, CardContent, Typography, Chip, Box, Tooltip } from "@mui/material";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
 
-// const priorityColors = {
-//   Low: "success",
-//   Medium: "warning",
-//   High: "error",
-// };
+export default function TaskCard({ data }) {
+  const priorityColor = {
+    High: "error",
+    Medium: "warning",
+    Low: "success",
+  };
 
-// export default function TaskCard({ data }) {
-//   return (
-//     <Card elevation={3} sx={{ borderLeft: `6px solid #1976d2`, minHeight: 150 }}>
-//       <CardContent>
-//         <Stack direction="row" justifyContent="space-between" alignItems="center">
-//           <Typography variant="h6" fontWeight={600}>
-//             {data.title}
-//           </Typography>
-//           <Chip
-//             label={data.priority}
-//             color={priorityColors[data.priority] || "default"}
-//             icon={<PriorityHighIcon />}
-//           />
-//         </Stack>
+  const getStatusIcon = (status) => {
+    return status === "Completed" ? <CheckCircleIcon color="success" /> : <HourglassEmptyIcon color="warning" />;
+  };
 
-//         <Typography variant="body2" sx={{ mt: 1.5, color: "text.secondary" }}>
-//           {data.description}
-//         </Typography>
+  return (
+    <Card
+      elevation={4}
+      sx={{
+        borderLeft: `6px solid`,
+        borderColor: `${priorityColor[data.priority]}.main`,
+        backgroundColor: "#1f2937", // Tailwind gray-800
+        color: "#fff",
+        transition: "transform 0.2s ease-in-out",
+        "&:hover": {
+          transform: "scale(1.02)",
+          boxShadow: "0 6px 20px rgba(0,0,0,0.4)",
+        },
+      }}
+    >
+      <CardContent>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+          <Typography variant="h6" fontWeight="bold">
+            {data.title}
+          </Typography>
+          <Tooltip title={data.status}>
+            {getStatusIcon(data.status)}
+          </Tooltip>
+        </Box>
 
-//         <Box sx={{ mt: 2 }} display="flex" gap={2} alignItems="center">
-//           <Chip
-//             icon={<EventIcon />}
-//             label={`Due: ${new Date(data.dueDate).toLocaleDateString()}`}
-//             variant="outlined"
-//           />
-//           <Chip
-//             label={`Status: ${data.status}`}
-//             color={data.status === "completed" ? "success" : "info"}
-//             variant="filled"
-//           />
-//         </Box>
-//       </CardContent>
-//     </Card>
-//   );
-// }
+        <Typography variant="body2" sx={{ mb: 1 }}>
+          {data.description}
+        </Typography>
 
+        <Box mb={1}>
+          <Chip
+            label={`Priority: ${data.priority}`}
+            color={priorityColor[data.priority]}
+            size="small"
+            sx={{ fontWeight: 600, mr: 1 }}
+          />
+          <Chip
+            label={`Due: ${new Date(data.dueDate).toLocaleDateString()}`}
+            variant="outlined"
+            size="small"
+            sx={{ color: "#bbb", borderColor: "#bbb" }}
+          />
+        </Box>
+
+        {data.status === "Completed" && data.proof && (
+          <Typography variant="body2" mt={2}>
+            📎 Proof:{" "}
+            <a href={data.proof} target="_blank" rel="noreferrer" style={{ color: "#4fc3f7" }}>
+              View Uploaded File
+            </a>
+          </Typography>
+        )}
+      </CardContent>
+    </Card>
+  );
+}

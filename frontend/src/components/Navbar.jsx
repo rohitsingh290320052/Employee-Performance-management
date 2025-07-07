@@ -1,41 +1,44 @@
 import { Link } from "react-router-dom";
+import { useState } from "react";
+import AssessmentIcon from "@mui/icons-material/Assessment";
+import "./Navbar.css";
 
-const Navbar = () => {
+export default function Navbar() {
+  const [menuOpen, setMenuOpen] = useState(false);
+
   return (
-    <nav style={styles.navbar}>
-      <div style={styles.left}>PMS</div>
-      <div style={styles.right}>
-        <Link to="/admin-register" style={styles.link}>Admin Register</Link>
-        <Link to="/employee-register" style={styles.link}>Employee Register</Link>
+    <nav className="navbar">
+      {/* Logo + Icon */}
+      <div className="logo">
+        <Link to="/" className="icon-link" title="Go to Home">
+          <AssessmentIcon
+            style={{ fontSize: 28, verticalAlign: "middle", color: "#1e293b" }}
+          />
+        </Link>
+        <Link to="/" className="logo-text">
+          PMS
+        </Link>
+      </div>
+
+      {/* Desktop links */}
+      <div className={`nav-links ${menuOpen ? "open" : ""}`}>
+        <Link to="/admin-register" onClick={() => setMenuOpen(false)}>
+          Admin Register
+        </Link>
+        <Link to="/employee-register" onClick={() => setMenuOpen(false)}>
+          Employee Register
+        </Link>
+      </div>
+
+      {/* Mobile hamburger */}
+      <div
+        className={`hamburger ${menuOpen ? "open" : ""}`}
+        onClick={() => setMenuOpen(!menuOpen)}
+      >
+        <span />
+        <span />
+        <span />
       </div>
     </nav>
   );
 }
-
-const styles = {
-  navbar: {
-    height: "60px",
-    backgroundColor: "#1e40af",
-    color: "#fff",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: "0 1.5rem",
-    boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
-  },
-  left: {
-    fontWeight: "bold",
-    fontSize: "1.2rem",
-  },
-  right: {
-    display: "flex",
-    gap: "1rem",
-  },
-  link: {
-    color: "#fff",
-    textDecoration: "none",
-    fontWeight: 500,
-  },
-};
-
-export default Navbar;

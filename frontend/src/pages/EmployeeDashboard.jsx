@@ -8,37 +8,39 @@ import {
   TextField,
   Box,
   Chip,
+  Stack,
+  Link,
 } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 
 export default function EmployeeDashboard() {
   const [tasks, setTasks] = useState([]);
-  const [proofs, setProofs] = useState({}); // Track proof inputs per task
+  const [proofs, setProofs] = useState({});
 
-  // Load tasks on mount
+  // Fetch tasks on mount
   useEffect(() => {
     api.get("/employee/tasks").then((res) => setTasks(res.data));
   }, []);
 
-  // Handle proof text input
-  const handleProofChange = (taskId, value) => {
+  const handleProofChange = (taskId, value) =>
     setProofs((prev) => ({ ...prev, [taskId]: value }));
-  };
 
-  // Handle status update
+  const getPriorityColor = (priority) =>
+    priority === "High"
+      ? "#ef4444"
+      : priority === "Medium"
+      ? "#facc15"
+      : "#22c55e";
+
   const markCompleted = async (taskId) => {
     const proof = proofs[taskId] || "";
-
     try {
       await api.put("/employee/update-task", {
         taskId,
         status: "Completed",
         proof,
       });
-      
-     
 
-      // Update frontend state
       setTasks((prev) =>
         prev.map((t) =>
           t._id === taskId ? { ...t, status: "Completed", proof } : t
@@ -51,17 +53,50 @@ export default function EmployeeDashboard() {
   };
 
   return (
-    <Box sx={{ p: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Employee Dashboard
+    <Box sx={{ pt: "80px", px: 4 }}>
+      <Typography variant="h4" fontWeight="bold" gutterBottom>
+        📋 My Tasks
       </Typography>
 
       {tasks.map((t) => (
-        <Card key={t._id} sx={{ mb: 3 }}>
+        <Card
+          key={t._id}
+          sx={{
+            mb: 4,
+            borderRadius: 3,
+            backgroundColor: "#fff", // ✅ white background
+            color: "#1e293b", // dark text for contrast
+            borderLeft: `6px solid ${getPriorityColor(t.priority)}`,
+            boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+            transition: "transform 0.25s ease",
+            "&:hover": { transform: "translateY(-4px)" },
+          }}
+        >
           <CardContent>
-            <Typography variant="h6">{t.title}</Typography>
+            {/* Title + Priority */}
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+              mb={1}
+            >
+              <Typography variant="h6" fontWeight="600">
+                {t.title}
+              </Typography>
+              <Chip
+                label={t.priority}
+                sx={{
+                  bgcolor: getPriorityColor(t.priority),
+                  color: "#fff",
+                  fontWeight: 600,
+                }}
+              />
+            </Stack>
+
+            {/* Description */}
             <Typography sx={{ mb: 1 }}>{t.description}</Typography>
 
+            {/* Status */}
             <Chip
               label={t.status}
               color={t.status === "Completed" ? "success" : "warning"}
@@ -69,20 +104,21 @@ export default function EmployeeDashboard() {
               sx={{ mb: 1 }}
             />
 
+            {/* Due date */}
             <Typography variant="body2" sx={{ mb: 2 }}>
               Due: {new Date(t.dueDate).toLocaleDateString()}
             </Typography>
 
-            {/* Show proof input and button if not completed */}
+            {/* If not completed: show input + button */}
             {t.status !== "Completed" && (
               <>
                 <TextField
                   placeholder="Proof link (image or URL)"
                   fullWidth
                   size="small"
-                  sx={{ mb: 1 }}
                   value={proofs[t._id] || ""}
                   onChange={(e) => handleProofChange(t._id, e.target.value)}
+                  sx={{ mb: 1 }}
                 />
                 <Button
                   variant="contained"
@@ -98,9 +134,14 @@ export default function EmployeeDashboard() {
             {t.status === "Completed" && t.proof && (
               <Typography sx={{ mt: 2 }}>
                 ✅ Proof:{" "}
-                <a href={t.proof} target="_blank" rel="noreferrer">
+                <Link
+                  href={t.proof}
+                  target="_blank"
+                  rel="noreferrer"
+                  underline="hover"
+                >
                   View
-                </a>
+                </Link>
               </Typography>
             )}
           </CardContent>

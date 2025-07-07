@@ -1,6 +1,89 @@
+// const User = require("../models/User");
+// const Task = require("../models/Task");
+
+// exports.addEmployee = async (req, res) => {
+//   const { email, role } = req.body;
+
+//   try {
+//     const exists = await User.findOne({ email });
+//     if (exists) return res.status(400).json({ message: "Employee already exists" });
+
+//     const employee = new User({ email, role, company: req.user.company, branch: req.user.branch, password: "temp123" });
+//     await employee.save();
+
+//     res.status(201).json({ message: "Employee added" });
+//   } catch (err) {
+//     res.status(500).json({ message: "Error adding employee", error: err.message });
+//   }
+// };
+
+// exports.assignTask = async (req, res) => {
+//   const { title, description, dueDate, priority, assignedTo } = req.body;
+
+//   try {
+//     const task = new Task({ title, description, dueDate, priority, assignedTo });
+//     await task.save();
+
+//     res.status(201).json({ message: "Task assigned" });
+//   } catch (err) {
+//     res.status(500).json({ message: "Error assigning task", error: err.message });
+//   }
+// };
+
+// exports.getAllTasks = async (req, res) => {
+//   try {
+//     const tasks = await Task.find().populate("assignedTo", "name email");
+//     res.json(tasks);
+//   } catch (err) {
+//     res.status(500).json({ message: "Error fetching tasks", error: err.message });
+//   }
+// };
+
+
+// exports.taskAnalytics = async (req, res) => {
+//   try {
+//     const employees = await User.find({ role: "employee", company: req.user.company });
+
+//     const result = await Promise.all(
+//       employees.map(async (emp) => {
+//         const tasks = await Task.find({ assignedTo: emp._id });
+//         const total = tasks.length;
+//         const completed = tasks.filter((t) => t.status === "Completed").length;
+//         const pending = total - completed;
+
+//         return {
+//           name: emp.name || emp.email,
+//           email: emp.email,
+//           total,
+//           completed,
+//           pending,
+//         };
+//       })
+//     );
+
+//     res.status(200).json(result);
+//   } catch (error) {
+//     res.status(500).json({ message: "Error fetching analytics", error: error.message });
+//   }
+// };
+
+// exports.lookupUser = async (req, res) => {
+//   try {
+//     const { email } = req.params;
+//     const user = await User.findOne({ email });
+//     if (!user) return res.status(404).json({ message: "User not found" });
+
+//     res.json(user);
+//   } catch (err) {
+//     res.status(500).json({ message: "Error looking up user", error: err.message });
+//   }
+// };
+
+
 const User = require("../models/User");
 const Task = require("../models/Task");
 
+// Add new employee
 exports.addEmployee = async (req, res) => {
   const { email, role } = req.body;
 
@@ -8,45 +91,69 @@ exports.addEmployee = async (req, res) => {
     const exists = await User.findOne({ email });
     if (exists) return res.status(400).json({ message: "Employee already exists" });
 
-    const employee = new User({ email, role, company: req.user.company, branch: req.user.branch, password: "temp123" });
-    await employee.save();
+    const employee = new User({
+      email,
+      role,
+      company: req.user.company,
+      branch: req.user.branch,
+      password: "temp123", // temporary password
+    });
 
+    await employee.save();
     res.status(201).json({ message: "Employee added" });
   } catch (err) {
     res.status(500).json({ message: "Error adding employee", error: err.message });
   }
 };
 
+// Assign a task to employee (includes assignedBy for filtering)
 exports.assignTask = async (req, res) => {
   const { title, description, dueDate, priority, assignedTo } = req.body;
 
   try {
-    const task = new Task({ title, description, dueDate, priority, assignedTo });
-    await task.save();
+    const task = new Task({
+      title,
+      description,
+      dueDate,
+      priority,
+      assignedTo,
+      assignedBy: req.user._id, // ✅ Track which admin assigned this task
+    });
 
+    await task.save();
     res.status(201).json({ message: "Task assigned" });
   } catch (err) {
     res.status(500).json({ message: "Error assigning task", error: err.message });
   }
 };
 
+// Get only tasks assigned by this admin
 exports.getAllTasks = async (req, res) => {
   try {
-    const tasks = await Task.find().populate("assignedTo", "name email");
+    const tasks = await Task.find({ assignedBy: req.user._id })
+      .populate("assignedTo", "name email");
+
     res.json(tasks);
   } catch (err) {
     res.status(500).json({ message: "Error fetching tasks", error: err.message });
   }
 };
 
-
+// Analytics for employees under the same company
 exports.taskAnalytics = async (req, res) => {
   try {
-    const employees = await User.find({ role: "employee", company: req.user.company });
+    const employees = await User.find({
+      role: "employee",
+      company: req.user.company,
+    });
 
     const result = await Promise.all(
       employees.map(async (emp) => {
-        const tasks = await Task.find({ assignedTo: emp._id });
+        const tasks = await Task.find({
+          assignedTo: emp._id,
+          assignedBy: req.user._id, // ✅ only count admin's tasks
+        });
+
         const total = tasks.length;
         const completed = tasks.filter((t) => t.status === "Completed").length;
         const pending = total - completed;
@@ -67,6 +174,7 @@ exports.taskAnalytics = async (req, res) => {
   }
 };
 
+// Lookup user by email
 exports.lookupUser = async (req, res) => {
   try {
     const { email } = req.params;
