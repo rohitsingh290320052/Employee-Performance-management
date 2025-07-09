@@ -50,6 +50,7 @@ export default function AdminDashboard() {
 
   const [tasks, setTasks] = useState([]);
   const [employees, setEmployees] = useState([]);
+  const [analyticsData, setAnalyticsData] = useState([]);
   const [empEmail, setEmpEmail] = useState("");
 
   const [task, setTask] = useState({
@@ -66,6 +67,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     fetchTasks();
     fetchEmployees();
+    fetchAnalytics();
   }, []);
 
   const fetchTasks = async () => {
@@ -76,6 +78,15 @@ export default function AdminDashboard() {
   const fetchEmployees = async () => {
     const res = await api.get("/admin/employees");
     setEmployees(res.data);
+  };
+
+  const fetchAnalytics = async () => {
+    try {
+      const res = await api.get("/admin/analytics");
+      setAnalyticsData(res.data);
+    } catch (err) {
+      console.error("Error fetching analytics:", err);
+    }
   };
 
   const addEmployee = async () => {
@@ -104,6 +115,7 @@ export default function AdminDashboard() {
       alert("Task assigned");
       setTask({ title: "", description: "", priority: "Low", dueDate: "" });
       fetchTasks();
+      fetchAnalytics(); // refresh analytics after task assign
     } catch (e) {
       alert(e.response?.data?.error || "Failed to assign task");
     }
@@ -113,6 +125,7 @@ export default function AdminDashboard() {
     if (window.confirm("Are you sure to delete this task?")) {
       await api.delete(`/admin/task/${id}`);
       fetchTasks();
+      fetchAnalytics(); // refresh analytics after delete
     }
   };
 
@@ -268,23 +281,22 @@ export default function AdminDashboard() {
   };
 
   const chartData = {
-    labels: employees.map((e) => e.email),
+    labels: analyticsData.map((a) => a.email),
     datasets: [
       {
         label: "Total Tasks",
-        data: employees.map((e) =>
-          tasks.filter((t) => t.assignedTo?.email === e.email).length
-        ),
+        data: analyticsData.map((a) => a.total),
         backgroundColor: "#3b82f6",
       },
       {
         label: "Completed",
-        data: employees.map((e) =>
-          tasks.filter(
-            (t) => t.assignedTo?.email === e.email && t.status === "Completed"
-          ).length
-        ),
+        data: analyticsData.map((a) => a.completed),
         backgroundColor: "#10b981",
+      },
+      {
+        label: "Pending",
+        data: analyticsData.map((a) => a.pending),
+        backgroundColor: "#f59e0b",
       },
     ],
   };
@@ -434,12 +446,76 @@ export default function AdminDashboard() {
         <Divider sx={{ my: 4 }} />
 
         {/* Charts */}
-        <Typography variant="h5" gutterBottom>
-          📊 Task Analytics
-        </Typography>
-        <Paper sx={{ p: 2 }}>
-          <Bar data={chartData} />
-        </Paper>
+        {/* Task Analytics Chart Section */}
+<Typography variant="h5" gutterBottom>
+  📊 Task Analytics
+</Typography>
+<Typography variant="h5" gutterBottom>
+  📊 Task Analytics
+</Typography>
+
+<Paper sx={{ p: 2, overflowX: "auto" }}>
+  <Box sx={{ minWidth: analyticsData.length * 60 }}>
+    <Bar
+      data={{
+        labels: analyticsData.map((_, index) => `Emp ${index + 1}`),
+        datasets: [
+          {
+            label: "Total Tasks",
+            data: analyticsData.map((e) => e.total),
+            backgroundColor: "#3b82f6",
+          },
+          {
+            label: "Completed",
+            data: analyticsData.map((e) => e.completed),
+            backgroundColor: "#10b981",
+          },
+          {
+            label: "Pending",
+            data: analyticsData.map((e) => e.pending),
+            backgroundColor: "#f59e0b",
+          },
+        ],
+      }}
+      options={{
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: "top" },
+          title: {
+            display: true,
+            text: "Employee Task Distribution",
+            font: { size: 18 },
+          },
+          tooltip: {
+            callbacks: {
+              title: (tooltipItems) => {
+                const index = tooltipItems[0].dataIndex;
+                return analyticsData[index]?.email || `Emp ${index + 1}`;
+              },
+            },
+          },
+        },
+        scales: {
+          x: {
+            ticks: {
+              autoSkip: false,
+              maxRotation: 75,
+              minRotation: 45,
+            },
+          },
+          y: {
+            beginAtZero: true,
+            ticks: { precision: 0 },
+          },
+        },
+      }}
+      height={300}
+    />
+  </Box>
+</Paper>
+
+
       </Container>
     </>
   );

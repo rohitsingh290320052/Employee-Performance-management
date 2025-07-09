@@ -13,7 +13,7 @@ router.get("/lookup/:email", authenticate, lookupUser);
 router.put("/task/:id", authenticate, updateTask);
 router.delete("/task/:id", authenticate, deleteTask);
 router.get("/employees", authenticate, getAllEmployees);
-router.get("/tasks-by-employee/:id", authenticate, getTasksByEmployee);
+//router.get("/tasks-by-employee/:id", authenticate, getTasksByEmployee);
 
 
 
