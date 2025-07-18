@@ -5,6 +5,8 @@ import {
   Paper,
   Box,
   CircularProgress,
+  Grid,
+  Divider,
 } from "@mui/material";
 import { Bar, Pie } from "react-chartjs-2";
 import {
@@ -19,7 +21,16 @@ import {
 } from "chart.js";
 import api from "@/api/axios";
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend);
+// Register ChartJS components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 export default function EmployeeAnalyticsPage() {
   const [analyticsData, setAnalyticsData] = useState([]);
@@ -41,29 +52,29 @@ export default function EmployeeAnalyticsPage() {
 
   if (loading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", mt: 8 }}>
-        <CircularProgress />
+      <Box sx={{ display: "flex", justifyContent: "center", mt: 10 }}>
+        <CircularProgress size={60} />
       </Box>
     );
   }
 
   const barData = {
-    labels: analyticsData.map((a) => a.email),
+    labels: analyticsData.map((a) => a.email.split("@")[0]),
     datasets: [
       {
         label: "Assigned",
         data: analyticsData.map((a) => a.total),
-        backgroundColor: "#3b82f6",
+        backgroundColor: "rgba(59, 130, 246, 0.8)",
       },
       {
         label: "Completed",
         data: analyticsData.map((a) => a.completed),
-        backgroundColor: "#10b981",
+        backgroundColor: "rgba(16, 185, 129, 0.8)",
       },
       {
         label: "Pending",
         data: analyticsData.map((a) => a.pending),
-        backgroundColor: "#f59e0b",
+        backgroundColor: "rgba(245, 158, 11, 0.8)",
       },
     ],
   };
@@ -71,8 +82,17 @@ export default function EmployeeAnalyticsPage() {
   const barOptions = {
     responsive: true,
     plugins: {
-      title: { display: true, text: "Task Summary per Employee" },
-      legend: { position: "top" },
+      title: {
+        display: true,
+        text: "Task Summary per Employee",
+        font: {
+          size: 18,
+          weight: "bold",
+        },
+      },
+      legend: {
+        position: "bottom",
+      },
     },
     scales: {
       x: {
@@ -84,7 +104,10 @@ export default function EmployeeAnalyticsPage() {
       },
       y: {
         beginAtZero: true,
-        ticks: { precision: 0 },
+        ticks: {
+          precision: 0,
+          stepSize: 1,
+        },
       },
     },
   };
@@ -98,32 +121,58 @@ export default function EmployeeAnalyticsPage() {
     datasets: [
       {
         data: [totalAssigned, totalCompleted, totalPending],
-        backgroundColor: ["#3b82f6", "#10b981", "#f59e0b"],
+        backgroundColor: [
+          "rgba(59, 130, 246, 0.8)",
+          "rgba(16, 185, 129, 0.8)",
+          "rgba(245, 158, 11, 0.8)",
+        ],
         hoverOffset: 8,
       },
     ],
   };
 
   return (
-    <Container sx={{ mt: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        📈 Employee Performance Analytics
+  <Container maxWidth="lg" sx={{ py: 6 }}>
+    <Box sx={{ px: { xs: 1, sm: 2, md: 3 }, py: 2 }}>
+      <Typography variant="h4" gutterBottom fontWeight="bold">
+        📊 Employee Performance Analytics
       </Typography>
 
-      <Paper sx={{ p: 3, mb: 4, overflowX: "auto" }}>
-        <Box sx={{ minWidth: analyticsData.length * 80, height: 400 }}>
-          <Bar data={barData} options={barOptions} />
-        </Box>
-      </Paper>
+      <Divider sx={{ mb: 4 }} />
 
-      <Paper sx={{ p: 3, mb: 4 }}>
-        <Typography variant="h6" gutterBottom>
-          Overall Task Distribution
-        </Typography>
-        <Box sx={{ maxWidth: 400, mx: "auto" }}>
-          <Pie data={pieData} />
-        </Box>
-      </Paper>
-    </Container>
-  );
+      <Grid container spacing={4}>
+        {/* Bar Chart */}
+        <Grid item xs={12} md={8}>
+          <Paper elevation={3} sx={{ p: 3, overflowX: "auto" }}>
+            <Typography variant="h6" gutterBottom fontWeight="medium">
+              Task Summary (Per Employee)
+            </Typography>
+            <Box sx={{ minWidth: analyticsData.length * 80, height: 400 }}>
+              <Bar data={barData} options={barOptions} />
+            </Box>
+          </Paper>
+        </Grid>
+
+        {/* Pie Chart */}
+        <Grid item xs={12} md={4}>
+          <Paper elevation={3} sx={{ p: 3 }}>
+            <Typography variant="h6" gutterBottom fontWeight="medium">
+              Overall Task Distribution
+            </Typography>
+            <Box
+              sx={{
+                height: 300,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Pie data={pieData} />
+            </Box>
+          </Paper>
+        </Grid>
+      </Grid>
+    </Box>
+  </Container>
+);
 }
