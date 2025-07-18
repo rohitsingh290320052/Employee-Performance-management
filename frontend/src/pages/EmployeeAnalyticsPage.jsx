@@ -131,6 +131,12 @@ export default function EmployeeAnalyticsPage() {
     ],
   };
 
+  const cellStyle = {
+  padding: "12px 16px",
+  textAlign: "left",
+  fontSize: "14px",
+};
+
   return (
   <Container maxWidth="lg" sx={{ py: 6 }}>
     <Box sx={{ px: { xs: 1, sm: 2, md: 3 }, py: 2 }}>
@@ -170,6 +176,45 @@ export default function EmployeeAnalyticsPage() {
               <Pie data={pieData} />
             </Box>
           </Paper>
+          
+          <Paper sx={{ p: 3, mb: 8 }}>
+  <Typography variant="h6" gutterBottom>
+    📋 Employee Task Summary Table (Sorted by Efficiency)
+  </Typography>
+
+  <Box sx={{ overflowX: "auto" }}>
+    <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      <thead>
+        <tr style={{ backgroundColor: "#f1f5f9" }}>
+          <th style={cellStyle}>Employee</th>
+          <th style={cellStyle}>Assigned</th>
+          <th style={cellStyle}>Completed</th>
+          <th style={cellStyle}>Efficiency</th>
+        </tr>
+      </thead>
+      <tbody>
+        {analyticsData
+          .slice()
+          .filter((emp) => emp.total > 0)
+          .sort((a, b) => (b.completed / b.total) - (a.completed / a.total))
+          .map((emp, i) => {
+            const username = emp.email.split("@")[0];
+            const efficiency = ((emp.completed / emp.total) * 100).toFixed(1);
+            return (
+              <tr key={i} style={{ borderBottom: "1px solid #e5e7eb" }}>
+                <td style={cellStyle}>{username}</td>
+                <td style={cellStyle}>{emp.total}</td>
+                <td style={cellStyle}>{emp.completed}</td>
+                <td style={cellStyle}>{efficiency}%</td>
+              </tr>
+            );
+          })}
+      </tbody>
+    </table>
+  </Box>
+</Paper>
+
+
         </Grid>
       </Grid>
     </Box>
