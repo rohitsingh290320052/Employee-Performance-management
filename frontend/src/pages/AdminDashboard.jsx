@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 import {
   Container,
   Typography,
@@ -52,6 +54,7 @@ export default function AdminDashboard() {
   const [employees, setEmployees] = useState([]);
   const [analyticsData, setAnalyticsData] = useState([]);
   const [empEmail, setEmpEmail] = useState("");
+  const navigate = useNavigate();
 
   const [task, setTask] = useState({
     title: "",
@@ -432,6 +435,10 @@ export default function AdminDashboard() {
           >
             Export CSV
           </Button>
+           
+        <Button variant="contained" color="primary" onClick={() => navigate("/analytics")}>
+          Compare Employee Performance
+        </Button>
         </Box>
 
         {/* Task List */}

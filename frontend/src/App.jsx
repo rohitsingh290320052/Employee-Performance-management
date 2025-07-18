@@ -10,6 +10,7 @@ import EmployeeRegister from "@/pages/EmployeeRegister";
 import AdminDashboard from "@/pages/AdminDashboard";
 import EmployeeDashboard from "@/pages/EmployeeDashboard";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import EmployeeAnalyticsPage from "./pages/EmployeeAnalyticsPage";
 
 export default function App() {
   return (
@@ -22,6 +23,7 @@ export default function App() {
         <Route path="/admin-register" element={<AdminRegister />} />
         <Route path="/employee-login" element={<EmployeeLogin />} />
         <Route path="/employee-register" element={<EmployeeRegister />} />
+        <Route path="/analytics" element={<EmployeeAnalyticsPage />} />
 
         {/* Protected */}
         <Route
