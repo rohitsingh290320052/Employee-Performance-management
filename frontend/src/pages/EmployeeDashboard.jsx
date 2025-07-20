@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "@/api/axios";
+import { useTheme } from "@mui/material/styles";
 import {
   Box,
   Typography,
@@ -16,6 +17,7 @@ import {
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 
 export default function EmployeeDashboard() {
+  const theme = useTheme(); // 🟡 Use theme from context
   const [tasks, setTasks] = useState([]);
   const [proofs, setProofs] = useState({});
   const [search, setSearch] = useState("");
@@ -58,9 +60,10 @@ export default function EmployeeDashboard() {
   };
 
   const filteredTasks = tasks
-    .filter((t) =>
-      t.title.toLowerCase().includes(search.toLowerCase()) ||
-      t.description.toLowerCase().includes(search.toLowerCase())
+    .filter(
+      (t) =>
+        t.title.toLowerCase().includes(search.toLowerCase()) ||
+        t.description.toLowerCase().includes(search.toLowerCase())
     )
     .filter((t) =>
       priorityFilter === "All" ? true : t.priority === priorityFilter
@@ -84,7 +87,6 @@ export default function EmployeeDashboard() {
         📋 My Tasks
       </Typography>
 
-      {/* Task indicators */}
       <Typography sx={{ mb: 2 }}>
         Total: <b>{totalTasks}</b> | Completed: <b>{completedTasks}</b> | Pending:{" "}
         <b>{totalTasks - completedTasks}</b>
@@ -144,15 +146,16 @@ export default function EmployeeDashboard() {
         </Grid>
       </Grid>
 
-      {/* Tasks Grid */}
+      {/* Tasks */}
       <Grid container spacing={3}>
         {filteredTasks.map((t) => (
           <Grid item xs={12} sm={6} md={4} key={t._id}>
             <Card
               sx={{
+                width: 260,
                 height: "100%",
-                width: 240,
                 borderRadius: 3,
+                backgroundColor: theme.palette.background.paper,
                 boxShadow: 4,
                 transition: "transform 0.2s, box-shadow 0.2s",
                 "&:hover": {
@@ -166,7 +169,7 @@ export default function EmployeeDashboard() {
                   display: "flex",
                   flexDirection: "column",
                   justifyContent: "space-between",
-                  height: 260, // Uniform height
+                  height: 280,
                 }}
               >
                 <Box>
@@ -231,40 +234,39 @@ export default function EmployeeDashboard() {
                       placeholder="Enter proof link"
                       fullWidth
                       size="small"
-                      variant="outlined"
                       value={proofs[t._id] || ""}
                       onChange={(e) =>
                         handleProofChange(t._id, e.target.value)
                       }
                       sx={{ mb: 1 }}
                     />
-  
-  <Button
-  fullWidth
-  variant="contained"
-  onClick={() => markCompleted(t._id)}
- 
-  sx={{
-    backgroundColor: "#10b981", 
-    color: "#fff",
-    fontWeight: "bold",
-    borderRadius: "8px",
-    py: 1.5,
-    "&:hover": {
-      backgroundColor: "#059669", 
-    },
-  }}
->
-  Mark as Completed
-</Button>
-
+                    <Button
+                      fullWidth
+                      variant="contained"
+                      onClick={() => markCompleted(t._id)}
+                      sx={{
+                        backgroundColor: "#10b981",
+                        color: "#fff",
+                        fontWeight: "bold",
+                        borderRadius: "8px",
+                        py: 1.5,
+                        "&:hover": {
+                          backgroundColor: "#059669",
+                        },
+                      }}
+                    >
+                      Mark as Completed
+                    </Button>
                   </Box>
                 ) : t.proof ? (
                   <Box
                     sx={{
                       mt: 1,
                       p: 1,
-                      backgroundColor: "#f0fdf4",
+                      backgroundColor:
+                        theme.palette.mode === "dark"
+                          ? "rgba(22, 101, 52, 0.2)"
+                          : "#f0fdf4",
                       border: "1px solid #d1fae5",
                       borderRadius: 1,
                     }}

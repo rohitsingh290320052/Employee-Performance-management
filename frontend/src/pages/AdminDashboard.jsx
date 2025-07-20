@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
+import Stack from '@mui/material/Stack';
 import {
   Container,
   Typography,
@@ -109,6 +109,30 @@ export default function AdminDashboard() {
       alert("Enter task title and employee email");
       return;
     }
+    
+    else if (!task.description) {
+      alert("Enter task description");
+      return;
+    }
+     if (!task.dueDate) {
+      alert("Select a due date");
+      return;
+    }
+    if (new Date(task.dueDate) < new Date()) {
+      alert("Due date cannot be in the past");
+      return;
+    }
+    if (!task.priority) {
+      alert("Select a priority");
+      return;
+    }
+    if (!/\S+@\S+\.\S+/.test(empEmail)) {
+      alert("Invalid employee email");
+      return;
+    }
+    
+  
+
     try {
       const emp = await api.get(`/admin/lookup/${empEmail}`);
       await api.post("/admin/assign-task", {
@@ -159,129 +183,132 @@ export default function AdminDashboard() {
   };
 
   const TaskCard = ({ t }) => {
-    const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false);
 
-    const handleClick = () => {
-      if (t.proof) setOpen(true);
-    };
+  const handleClick = () => {
+    if (t.proof) setOpen(true);
+  };
 
-    return (
-      <>
-        <Card
-          elevation={4}
-          sx={{
-            mb: 2,
-            height: "100%",
-            cursor: t.proof ? "pointer" : "default",
-            borderRadius: 3,
-            borderLeft: `6px solid ${getPriorityColor(t.priority)}`,
-            transition: "0.2s ease",
-            "&:hover": {
-              boxShadow: 6,
-              transform: "scale(1.01)",
-            },
-          }}
-          onClick={handleClick}
-        >
-          <CardContent>
-            <Box display="flex" justifyContent="space-between" alignItems="center">
-              <Typography variant="h6" fontWeight="bold">
-                {t.title}
-              </Typography>
-              <Chip
-                label={t.status}
-                color={t.status === "Completed" ? "success" : "warning"}
-                size="small"
-                icon={t.status === "Completed" ? <CheckCircleIcon fontSize="small" /> : undefined}
-              />
-            </Box>
-
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              Assigned To: <strong>{t.assignedTo?.email || "N/A"}</strong>
+  return (
+    <>
+      <Card
+        elevation={6}
+        sx={{
+          mb: 3,
+          height: "100%",
+          cursor: t.proof ? "pointer" : "default",
+          borderRadius: 3,
+          background: "linear-gradient(to right, #f9fafb, #f3f4f6)",
+          borderLeft: `6px solid ${getPriorityColor(t.priority)}`,
+          transition: "transform 0.2s, box-shadow 0.2s",
+          "&:hover": {
+            transform: "translateY(-5px)",
+            boxShadow: 6,
+          },
+        }}
+        onClick={handleClick}
+      >
+        <CardContent>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Typography variant="h6" fontWeight={600}>
+              {t.title}
             </Typography>
+            <Chip
+              label={t.status}
+              color={t.status === "Completed" ? "success" : "warning"}
+              size="small"
+              icon={t.status === "Completed" ? <CheckCircleIcon fontSize="small" /> : undefined}
+              sx={{ fontWeight: 500 }}
+            />
+          </Box>
 
-            <Box
-              mt={1}
-              p={1.2}
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            Assigned To: <strong>{t.assignedTo?.email || "N/A"}</strong>
+          </Typography>
+
+          <Box
+            mt={1.5}
+            p={1.5}
+            sx={{
+              backgroundColor: "#ffffff",
+              borderRadius: 2,
+              border: "1px solid #e5e7eb",
+            }}
+          >
+            <Typography variant="subtitle2" color="text.secondary">
+              Description
+            </Typography>
+            <Typography variant="body2" sx={{ mt: 0.5 }}>
+              {t.description || "No description provided."}
+            </Typography>
+          </Box>
+
+          <Box display="flex" justifyContent="space-between" alignItems="center" mt={2}>
+            <Chip
+              label={`Priority: ${t.priority}`}
+              size="small"
               sx={{
-                backgroundColor: "#f9fafb",
-                borderRadius: 2,
-                border: "1px solid #e5e7eb",
+                backgroundColor: getPriorityColor(t.priority),
+                color: "#fff",
+                fontWeight: 500,
+              }}
+            />
+            <Typography variant="caption" color="text.secondary">
+              Due: {new Date(t.dueDate).toLocaleDateString()}
+            </Typography>
+          </Box>
+
+          <Box mt={2} display="flex" gap={1}>
+            <IconButton
+              onClick={(e) => {
+                e.stopPropagation();
+                if (window.confirm("Are you sure to delete this task?")) {
+                  deleteTask(t._id);
+                }
+              }}
+              color="error"
+              size="small"
+              sx={{
+                backgroundColor: "#fee2e2",
+                borderRadius: 1,
+                "&:hover": { backgroundColor: "#fecaca" },
               }}
             >
-              <Typography variant="subtitle2" color="text.secondary">
-                Description
-              </Typography>
-              <Typography variant="body2" sx={{ mt: 0.5 }}>
-                {t.description || "No description provided."}
-              </Typography>
-            </Box>
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </Box>
 
-            <Box display="flex" justifyContent="space-between" alignItems="center" mt={2}>
-              <Chip
-                label={`Priority: ${t.priority}`}
-                size="small"
-                sx={{
-                  backgroundColor: getPriorityColor(t.priority),
-                  color: "#fff",
-                  borderRadius: 1,
-                }}
+          {t.proof && (
+            <Typography variant="caption" color="primary" sx={{ mt: 2, display: "block" }}>
+              * Click card to view proof
+            </Typography>
+          )}
+        </CardContent>
+      </Card>
+
+      {t.proof && (
+        <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
+          <DialogContent>
+            {/\.(jpe?g|png|gif|webp)$/i.test(t.proof) ? (
+              <img
+                src={t.proof}
+                alt="proof"
+                style={{ width: "100%", borderRadius: 8 }}
               />
-              <Typography variant="caption" color="text.secondary">
-                Due: {new Date(t.dueDate).toLocaleDateString()}
-              </Typography>
-            </Box>
-
-            <Box mt={2} display="flex" gap={1}>
-              <IconButton
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (window.confirm("Are you sure to delete this task?")) {
-                    deleteTask(t._id);
-                  }
-                }}
-                color="error"
-                size="small"
-                sx={{
-                  backgroundColor: "#fee2e2",
-                  borderRadius: 1,
-                  "&:hover": { backgroundColor: "#fecaca" },
-                }}
-              >
-                <DeleteIcon fontSize="small" />
-              </IconButton>
-            </Box>
-
-            {t.proof && (
-              <Typography variant="caption" color="primary" mt={1}>
-                * Click card to view proof
-              </Typography>
+            ) : (
+              <iframe
+                src={t.proof}
+                title="proof"
+                style={{ width: "100%", height: "70vh", border: "none" }}
+              />
             )}
-          </CardContent>
-        </Card>
+          </DialogContent>
+        </Dialog>
+      )}
+    </>
+  );
+};
 
-        {t.proof && (
-          <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
-            <DialogContent>
-              {/\.(jpe?g|png|gif|webp)$/i.test(t.proof) ? (
-                <img
-                  src={t.proof}
-                  alt="proof"
-                  style={{ width: "100%", borderRadius: 8 }}
-                />
-              ) : (
-                <iframe
-                  src={t.proof}
-                  title="proof"
-                  style={{ width: "100%", height: "70vh", border: "none" }}
-                />
-              )}
-            </DialogContent>
-          </Dialog>
-        )}
-      </>
-    );
-  };
 
   const chartData = {
     labels: analyticsData.map((a) => a.email),
@@ -318,86 +345,128 @@ export default function AdminDashboard() {
       </AppBar>
 
       <Container maxWidth="lg" sx={{ mt: 4 }}>
-        {/* Add Employee */}
-        <Paper sx={{ p: 3, mb: 4 }}>
-          <Typography variant="h5" gutterBottom>
-            Add Employee
-          </Typography>
-          <Box display="flex" gap={2}>
-            <TextField
-              label="Employee Email"
-              fullWidth
-              value={empEmail}
-              onChange={(e) => setEmpEmail(e.target.value)}
-            />
-            <Button variant="contained" onClick={addEmployee}>
-              Add
-            </Button>
-          </Box>
-        </Paper>
+       {/* Add Employee */}
+<Card
+  sx={{
+    p: 3,
+    mb: 4,
+    borderRadius: 3,
+    boxShadow: 3,
+    backgroundColor: (theme) =>
+      theme.palette.mode === "dark" ? "#1e293b" : "#f9fafb",
+  }}
+>
+  <Typography variant="h6" fontWeight="bold" gutterBottom>
+    👤 Add Employee
+  </Typography>
+  <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+    <TextField
+      label="Employee Email"
+      fullWidth
+      size="small"
+      value={empEmail}
+      onChange={(e) => setEmpEmail(e.target.value)}
+    />
+    <Button
+      variant="contained"
+      color="primary"
+      sx={{ px: 5 }}
+      onClick={addEmployee}
+    >
+    Add
+    </Button>
+  </Stack>
+</Card>
 
-        {/* Assign Task */}
-        <Paper sx={{ p: 3, mb: 4 }}>
-          <Typography variant="h5" gutterBottom>
-            Assign Task
-          </Typography>
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Task Title"
-                fullWidth
-                value={task.title}
-                onChange={(e) => setTask({ ...task, title: e.target.value })}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Employee Email"
-                fullWidth
-                value={empEmail}
-                onChange={(e) => setEmpEmail(e.target.value)}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Description"
-                fullWidth
-                multiline
-                minRows={2}
-                value={task.description}
-                onChange={(e) => setTask({ ...task, description: e.target.value })}
-              />
-            </Grid>
-            <Grid item xs={6}>
-              <TextField
-                label="Priority"
-                select
-                fullWidth
-                value={task.priority}
-                onChange={(e) => setTask({ ...task, priority: e.target.value })}
-              >
-                <MenuItem value="Low">Low</MenuItem>
-                <MenuItem value="Medium">Medium</MenuItem>
-                <MenuItem value="High">High</MenuItem>
-              </TextField>
-            </Grid>
-            <Grid item xs={6}>
-              <TextField
-                label="Due Date"
-                type="date"
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                value={task.dueDate}
-                onChange={(e) => setTask({ ...task, dueDate: e.target.value })}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <Button fullWidth variant="contained" onClick={assignTask}>
-                Assign
-              </Button>
-            </Grid>
-          </Grid>
-        </Paper>
+{/* Assign Task */}
+<Card
+  sx={{
+    p: 3,
+    mb: 4,
+    borderRadius: 3,
+    boxShadow: 3,
+    backgroundColor: (theme) =>
+      theme.palette.mode === "dark" ? "#1e293b" : "#f9fafb",
+  }}
+>
+  <Typography variant="h6" fontWeight="bold" gutterBottom>
+    📌 Assign Task
+  </Typography>
+  <Grid container spacing={2}>
+    <Grid item xs={12} sm={6}>
+      <TextField
+        label="Task Title"
+        fullWidth
+        size="small"
+        value={task.title}
+        onChange={(e) => setTask({ ...task, title: e.target.value })}
+      />
+    </Grid>
+    <Grid item xs={12} sm={6}>
+      <TextField
+        label="Employee Email"
+        fullWidth
+        size="small"
+        value={empEmail}
+        onChange={(e) => setEmpEmail(e.target.value)}
+      />
+    </Grid>
+    <Grid item xs={12}>
+      <TextField
+        label="Description"
+        fullWidth
+        multiline
+        rows={3}
+        size="small"
+        value={task.description}
+        onChange={(e) =>
+          setTask({ ...task, description: e.target.value })
+        }
+      />
+    </Grid>
+    <Grid item xs={6}>
+      <TextField
+        label="Priority"
+        select
+        fullWidth
+        size="small"
+        value={task.priority}
+        onChange={(e) => setTask({ ...task, priority: e.target.value })}
+      >
+        <MenuItem value="Low">Low</MenuItem>
+        <MenuItem value="Medium">Medium</MenuItem>
+        <MenuItem value="High">High</MenuItem>
+      </TextField>
+    </Grid>
+    <Grid item xs={6}>
+      <TextField
+        label="Due Date"
+        type="date"
+        fullWidth
+        size="small"
+        InputLabelProps={{ shrink: true }}
+        value={task.dueDate}
+        onChange={(e) => setTask({ ...task, dueDate: e.target.value })}
+      />
+    </Grid>
+    <Grid item xs={12}>
+      <Button
+        fullWidth
+        variant="contained"
+        color="success"
+        onClick={assignTask}
+        sx={{
+          py: 1.2,
+          fontWeight: "bold",
+          letterSpacing: 0.5,
+        }}
+      >
+        ✅ Assign Task
+      </Button>
+    </Grid>
+  </Grid>
+</Card>
+
 
         {/* Filters */}
         <Box display="flex" gap={2} mb={2} flexWrap="wrap">
